@@ -360,6 +360,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
+    const currentUserId = req.user?._id || new mongoose.Types.ObjectId()
 
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing")
@@ -427,7 +428,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 },
                 isSubscribed: {
                     $cond: {
-                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        if: { $in: [currentUserId, "$subscribers.subscriber"] },
                         then: true,
                         else: false
                     }

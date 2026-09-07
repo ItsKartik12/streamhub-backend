@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { Like } from "../models/like.model.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -36,8 +37,24 @@ const getAllVideos = asyncHandler(async (req, res) => {
         Video.countDocuments(filter),
     ])
 
+    const videoIds = videos.map((video) => video._id)
+    const likeCounts = await Like.aggregate([
+        { $match: { video: { $in: videoIds } } },
+        { $group: { _id: "$video", count: { $sum: 1 } } },
+    ])
+    const likedVideoIds = req.user
+        ? await Like.find({ video: { $in: videoIds }, likedBy: req.user._id }).distinct("video")
+        : []
+    const likeCountByVideo = new Map(likeCounts.map((item) => [item._id.toString(), item.count]))
+    const likedIds = new Set(likedVideoIds.map((id) => id.toString()))
+    const enrichedVideos = videos.map((video) => ({
+        ...video,
+        likeCount: likeCountByVideo.get(video._id.toString()) || 0,
+        isLiked: likedIds.has(video._id.toString()),
+    }))
+
     return res.status(200).json(new ApiResponse(200, {
-        docs: videos,
+        docs: enrichedVideos,
         totalDocs,
         page,
         limit,
@@ -96,7 +113,15 @@ const getVideoById = asyncHandler(async (req, res) => {
     ).populate("owner", "fullName username avatar")
 
     if (!video) throw new ApiError(404, "Video not found")
-    return res.status(200).json(new ApiResponse(200, video, "Video fetched successfully"))
+    const [likeCount, isLiked] = await Promise.all([
+        Like.countDocuments({ video: video._id }),
+        req.user ? Like.exists({ video: video._id, likedBy: req.user._id }) : false,
+    ])
+    return res.status(200).json(new ApiResponse(200, {
+        ...video.toObject(),
+        likeCount,
+        isLiked: Boolean(isLiked),
+    }, "Video fetched successfully"))
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
