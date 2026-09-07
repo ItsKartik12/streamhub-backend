@@ -11,25 +11,23 @@ export default function Home() {
   const query = searchParams.get("q") || "";
   useEffect(() => {
     videoApi
-      .list()
+      .list({
+        query,
+        sortBy: searchParams.get("sort") === "trending" ? "views" : "createdAt",
+      })
       .then((response) => {
         const result = unwrap(response);
         setVideos(
-          Array.isArray(result) ? result : result?.docs || result?.videos || [],
+          Array.isArray(result) ? result : result?.docs || result?.videos || []
         );
       })
       .catch((err) =>
         setError(
-          err.response?.data?.message || "The feed could not load right now.",
-        ),
+          err.response?.data?.message || "The feed could not load right now."
+        )
       )
       .finally(() => setLoading(false));
-  }, []);
-  const filtered = videos.filter((video) =>
-    `${video.title} ${video.description}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
-  );
+  }, [query, searchParams]);
   return (
     <div className="home-page">
       <section className="page-intro">
@@ -62,9 +60,9 @@ export default function Home() {
             Try again
           </button>
         </div>
-      ) : filtered.length ? (
+      ) : videos.length ? (
         <div className="video-grid">
-          {filtered.map((video) => (
+          {videos.map((video) => (
             <VideoCard key={video._id || video.id} video={video} />
           ))}
         </div>

@@ -26,20 +26,26 @@ export function Watch() {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [editingComment, setEditingComment] = useState(null);
+  const [commentBusy, setCommentBusy] = useState(false);
 
   useEffect(() => {
     Promise.all([videoApi.get(videoId), commentApi.list(videoId)])
       .then(([videoResponse, commentResponse]) => {
-        setVideo(unwrap(videoResponse));
+        const loadedVideo = unwrap(videoResponse);
+        setVideo(loadedVideo);
+        setLiked(Boolean(loadedVideo?.isLiked));
+        setLikeCount(loadedVideo?.likeCount || 0);
         const result = unwrap(commentResponse);
         setComments(
           Array.isArray(result)
             ? result
-            : result?.docs || result?.comments || [],
+            : result?.docs || result?.comments || []
         );
       })
       .catch((requestError) =>
-        setError(apiMessage(requestError, "This video is unavailable.")),
+        setError(apiMessage(requestError, "This video is unavailable."))
       );
   }, [videoId]);
 
@@ -47,25 +53,60 @@ export function Watch() {
     event.preventDefault();
     if (!comment.trim()) return;
     try {
+      setCommentBusy(true);
       const response = await commentApi.create(videoId, comment.trim());
       setComments((current) => [unwrap(response), ...current]);
       setComment("");
       setActionError("");
     } catch (requestError) {
       setActionError(
-        apiMessage(requestError, "Your comment could not be posted."),
+        apiMessage(requestError, "Your comment could not be posted.")
       );
+    } finally {
+      setCommentBusy(false);
     }
   };
 
   const toggleLike = async () => {
     try {
-      await likeApi.video(videoId);
-      setLiked((value) => !value);
+      const response = await likeApi.video(videoId);
+      const result = unwrap(response);
+      setLiked(Boolean(result?.liked));
+      setLikeCount(result?.likeCount || 0);
       setActionError("");
     } catch (requestError) {
       setActionError(
-        apiMessage(requestError, "You need to be signed in to like videos."),
+        apiMessage(requestError, "You need to be signed in to like videos.")
+      );
+    }
+  };
+
+  const saveComment = async (item) => {
+    try {
+      const response = await commentApi.update(item._id, item.content);
+      const updated = unwrap(response);
+      setComments((current) =>
+        current.map((currentItem) =>
+          currentItem._id === item._id ? updated : currentItem
+        )
+      );
+      setEditingComment(null);
+    } catch (requestError) {
+      setActionError(
+        apiMessage(requestError, "Your comment could not be updated.")
+      );
+    }
+  };
+
+  const removeComment = async (commentId) => {
+    try {
+      await commentApi.remove(commentId);
+      setComments((current) =>
+        current.filter((item) => item._id !== commentId)
+      );
+    } catch (requestError) {
+      setActionError(
+        apiMessage(requestError, "Your comment could not be deleted.")
       );
     }
   };
@@ -106,7 +147,7 @@ export function Watch() {
               className={`action-button ${liked ? "selected" : ""}`}
               onClick={toggleLike}
             >
-              ♡ Like
+              {liked ? "♥" : "♡"} {likeCount} Like{likeCount === 1 ? "" : "s"}
             </button>
             <button
               className="action-button"
@@ -153,7 +194,9 @@ export function Watch() {
               placeholder="Add a thoughtful comment..."
               aria-label="Comment"
             />
-            <button className="button button-small">Post</button>
+            <button className="button button-small" disabled={commentBusy}>
+              {commentBusy ? "Posting..." : "Post"}
+            </button>
           </form>
         )}
         {comments.length === 0 && (
@@ -170,7 +213,42 @@ export function Watch() {
               <strong>
                 @{item.owner?.username || item.user?.username || "viewer"}
               </strong>
-              <p>{item.content}</p>
+              {editingComment === item._id ? (
+                <form
+                  className="comment-edit-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    saveComment(item);
+                  }}
+                >
+                  <input
+                    value={item.content}
+                    onChange={(event) =>
+                      setComments((current) =>
+                        current.map((currentItem) =>
+                          currentItem._id === item._id
+                            ? { ...currentItem, content: event.target.value }
+                            : currentItem
+                        )
+                      )
+                    }
+                  />
+                  <button className="button button-small">Save</button>
+                </form>
+              ) : (
+                <p>{item.content}</p>
+              )}
+              {user?._id === (item.owner?._id || item.owner) &&
+                editingComment !== item._id && (
+                  <div className="comment-actions">
+                    <button onClick={() => setEditingComment(item._id)}>
+                      Edit
+                    </button>
+                    <button onClick={() => removeComment(item._id)}>
+                      Delete
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         ))}
@@ -199,7 +277,7 @@ export function Upload() {
     try {
       setStatus("Uploading your video...");
       const response = await videoApi.upload(data, (uploadEvent) =>
-        setProgress(Math.round((uploadEvent.loaded * 100) / uploadEvent.total)),
+        setProgress(Math.round((uploadEvent.loaded * 100) / uploadEvent.total))
       );
       const created = unwrap(response);
       setStatus("Published. Opening your video...");
@@ -208,8 +286,8 @@ export function Upload() {
       setStatus(
         apiMessage(
           requestError,
-          "Upload failed. Check the files and try again.",
-        ),
+          "Upload failed. Check the files and try again."
+        )
       );
     }
   };
@@ -319,9 +397,13 @@ export function Channel() {
   useEffect(() => {
     userApi
       .channel(username)
-      .then((response) => setProfile(unwrap(response)))
+      .then((response) => {
+        const loadedProfile = unwrap(response);
+        setProfile(loadedProfile);
+        setSubscribed(Boolean(loadedProfile?.isSubscribed));
+      })
       .catch((requestError) =>
-        setError(apiMessage(requestError, "Channel not found.")),
+        setError(apiMessage(requestError, "Channel not found."))
       );
   }, [username]);
 
@@ -331,12 +413,12 @@ export function Channel() {
       return;
     }
     try {
-      await subscriptionApi.toggle(channel._id || channel.id);
-      setSubscribed((value) => !value);
+      const response = await subscriptionApi.toggle(channel._id || channel.id);
+      setSubscribed(Boolean(unwrap(response)?.subscribed));
       setActionError("");
     } catch (requestError) {
       setActionError(
-        apiMessage(requestError, "Subscription could not be updated."),
+        apiMessage(requestError, "Subscription could not be updated.")
       );
     }
   };
@@ -358,7 +440,10 @@ export function Channel() {
       <div
         className="cover-image"
         style={{
-          backgroundImage: `url(${channel.coverImage || "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80"})`,
+          backgroundImage: `url(${
+            channel.coverImage ||
+            "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80"
+          })`,
         }}
       />
       <div className="channel-heading">

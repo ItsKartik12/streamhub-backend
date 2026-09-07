@@ -21,7 +21,9 @@ export default function VideoCard({ video }) {
         />
         <span className="duration">
           {video.duration
-            ? `${Math.floor(video.duration / 60)}:${String(Math.floor(video.duration % 60)).padStart(2, "0")}`
+            ? `${Math.floor(video.duration / 60)}:${String(
+                Math.floor(video.duration % 60)
+              ).padStart(2, "0")}`
             : "HD"}
         </span>
       </Link>
@@ -45,6 +47,9 @@ export default function VideoCard({ video }) {
               ? new Date(video.createdAt).toLocaleDateString()
               : "Recently"}
           </p>
+          {video.likeCount !== undefined && (
+            <p className="video-meta">{formatViews(video.likeCount)} likes</p>
+          )}
         </div>
       </div>
     </article>
