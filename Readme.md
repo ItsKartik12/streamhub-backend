@@ -1,52 +1,149 @@
-# 🎥 StreamHub Backend API
+# StreamHub
 
-[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green?logo=node.js)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-v4.x-lightgrey?logo=express)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-brightgreen?logo=mongodb)](https://www.mongodb.com/)
-[![JWT](https://img.shields.io/badge/Authentication-JWT-black?logo=json-web-tokens)](https://jwt.io/)
-[![Cloudinary](https://img.shields.io/badge/Storage-Cloudinary-blue?logo=cloudinary)](https://cloudinary.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+A full-stack video-sharing platform built with **React, Node.js, Express, MongoDB, and Cloudinary**.
 
-A robust, scalable RESTful API built for **StreamHub**, a full-featured video-sharing platform. Built using modern backend architecture patterns with Express.js, MongoDB (Mongoose), Cloudinary for media storage, JWT for secure authentication, and Multer for file streaming/uploads.
+StreamHub allows users to create accounts, upload and watch videos, interact with content, manage channels, and discover videos through a modern responsive interface.
 
 ---
 
-## 🚀 Architectural Features
+## 🚀 Features
 
-- **JWT Authentication & Authorization**: Access tokens paired with HTTP-only Refresh Tokens for secure, seamless session maintenance.
-- **Media Upload Pipeline**: Multipart form handling via `Multer` combined with `Cloudinary` SDK integration for async video and image storage/transcoding.
-- **Database Architecture**: Complex relational modeling in MongoDB using Mongoose schema hooks, virtuals, and aggregation pipelines (lookup, unwind, project).
-- **Pagination & Optimization**: Custom aggregation pagination (`mongoose-aggregate-paginate-v2`) for fast timeline feeds, video catalogs, and search features.
-- **Robust Error Handling**: Standardized API response structures (`ApiResponse`) and centralized error classes (`ApiError`) with HTTP status codes.
+### 🔐 Authentication & User Management
+
+- User registration and login
+- JWT-based authentication
+- Access and refresh token handling
+- Protected routes
+- Logout functionality
+- Password change
+- Update account details
+- Avatar and cover image upload
+- User channel profiles
+
+### 🎥 Video Management
+
+- Upload videos with thumbnails
+- Browse published videos
+- Watch individual videos
+- Search videos
+- Pagination
+- Update video details
+- Delete videos
+- Publish/unpublish videos
+- Video ownership protection
+
+### ❤️ Engagement
+
+- Like/unlike videos
+- Like/unlike comments
+- View liked videos
+- Add comments
+- Update comments
+- Delete comments
+- Comment ownership protection
+
+### 👥 Subscriptions
+
+- Subscribe/unsubscribe from channels
+- View channel subscribers
+- View subscribed channels
+- Prevent users from subscribing to their own channel
+
+### 🎨 Frontend
+
+- Responsive React interface
+- Home video feed
+- Video watch page
+- Login and registration pages
+- Upload page
+- Channel page
+- Profile page
+- Sidebar navigation
+- Reusable video cards
+- Loading states
+- Protected routes
+- Authentication context
+
+### ☁️ Media Storage
+
+- Cloudinary integration for video, thumbnail, avatar, and cover-image storage
+- Temporary local upload handling
+- Automatic cleanup of temporary files
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## 🛠️ Tech Stack
 
-- **Runtime Environment**: Node.js (ES6 Module syntax)
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Media Hosting**: Cloudinary
-- **Authentication**: `jsonwebtoken` (JWT), `bcryptjs`
-- **File Uploads**: `multer`
-- **Utilities**: `cookie-parser`, `cors`, `dotenv`
+### Frontend
+
+- React
+- Vite
+- React Router
+- Axios
+- JavaScript
+- CSS
+
+### Backend
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcrypt
+- Multer
+- Cloudinary
+- CORS
+
+### Development Tools
+
+- Git & GitHub
+- VS Code
+- ESLint
+- Prettier
+- npm
 
 ---
 
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```text
-streamhub-backend/
-├── src/
-│   ├── controllers/      # Route handler logic (User, Video, Like, Comment, etc.)
-│   ├── db/               # Database connection setup
-│   ├── middlewares/      # Authentication, file upload (Multer), error middlewares
-│   ├── models/           # Mongoose schemas (User, Video, Subscription, Tweet, etc.)
-│   ├── routes/           # Express router endpoints
-│   ├── utils/            # Async handlers, ApiError, ApiResponse, Cloudinary uploaders
-│   ├── app.js            # Express application setup & middleware stack
-│   └── index.js          # App entry point & DB connection initialization
-├── .env.sample           # Template for environment variables
-├── package.json          # Project dependencies and scripts
+streamhub/
+│
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── db/
+│   │   ├── middlewares/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── utils/
+│   │   ├── app.js
+│   │   ├── constants.js
+│   │   └── index.js
+│   │
+│   ├── public/
+│   │   └── temp/
+│   │
+│   ├── .env.sample
+│   ├── package.json
+│   └── package-lock.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   │
+│   ├── public/
+│   ├── package.json
+│   └── package-lock.json
+│
+├── .gitignore
+├── .prettierignore
+├── .prettierrc
 └── README.md
 ```
