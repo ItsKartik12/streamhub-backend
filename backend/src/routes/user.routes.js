@@ -12,7 +12,7 @@ import {
     getWatchHistory, 
     updateAccountDetails
 } from "../controllers/user.controller.js";
-import {upload} from "../middlewares/multer.middleware.js"
+import { upload, cleanupTempFiles, validateUploadedFiles } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { optionalAuth } from "../middlewares/optionalAuth.middleware.js";
 
@@ -30,6 +30,8 @@ router.route("/register").post(
             maxCount: 1
         }
     ]),
+    cleanupTempFiles,
+    validateUploadedFiles,
     registerUser
     )
 
@@ -42,8 +44,8 @@ router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentUser)
 router.route("/update-account").patch(verifyJWT, updateAccountDetails)
 
-router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
-router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
+router.route("/avatar").patch(verifyJWT, upload.single("avatar"), cleanupTempFiles, validateUploadedFiles, updateUserAvatar)
+router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), cleanupTempFiles, validateUploadedFiles, updateUserCoverImage)
 
 router.route("/c/:username").get(optionalAuth, getUserChannelProfile)
 router.route("/history").get(verifyJWT, getWatchHistory)

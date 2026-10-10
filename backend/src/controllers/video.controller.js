@@ -80,7 +80,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     }
 
     const [uploadedVideo, uploadedThumbnail] = await Promise.all([
-        uploadOnCloudinary(videoFile),
+        uploadOnCloudinary(videoFile, "video"),
         uploadOnCloudinary(thumbnailFile),
     ])
     if (!uploadedVideo || !uploadedThumbnail) {
