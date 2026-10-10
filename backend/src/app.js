@@ -38,13 +38,27 @@ app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 
 app.use((error, req, res, next) => {
-    const statusCode = error.statusCode || 500
+    const isMulterLimitError = typeof error.code === "string" && error.code.startsWith("LIMIT_");
+    const statusCode = error.statusCode
+        || (error.code === "LIMIT_FILE_SIZE" ? 413 : isMulterLimitError ? 400 : 500);
+    const message = error.code === "LIMIT_FILE_SIZE"
+        ? "Uploaded file exceeds the allowed size"
+        : isMulterLimitError
+            ? "Invalid multipart upload"
+            : statusCode >= 500
+                ? "Internal server error"
+                : error.message || "Request failed";
+
+    if (statusCode >= 500) {
+        console.error("Request failed", { name: error.name, message: error.message });
+    }
+
     res.status(statusCode).json({
         statusCode,
         success: false,
-        message: error.message || "Internal server error",
-        errors: error.errors || [],
-    })
+        message,
+        errors: statusCode >= 500 ? [] : error.errors || [],
+    });
 })
 
 // http://localhost:8000/api/v1/users/register
